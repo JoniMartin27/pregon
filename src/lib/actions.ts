@@ -76,7 +76,13 @@ export async function createPost(formData: FormData) {
       const meta = account.meta
         ? (JSON.parse(account.meta) as Record<string, string>)
         : undefined;
-      const result = await adapter.publish({ content, credentials: creds, meta });
+      const result = await adapter.publish({
+        content,
+        credentials: creds,
+        meta,
+        kind: post.kind === "comment" ? "comment" : "post",
+        targetUrl: post.targetUrl ?? undefined,
+      });
       await prisma.publication.update({
         where: { id: pub.id },
         data: {

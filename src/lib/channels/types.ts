@@ -33,6 +33,10 @@ export interface PublishArgs {
   content: PublishContent;
   credentials: Credentials;
   meta?: AccountMeta;
+  /** "post" (crear) o "comment" (responder a un hilo). Por defecto "post". */
+  kind?: "post" | "comment";
+  /** URL del hilo destino cuando kind === "comment". */
+  targetUrl?: string;
 }
 
 export interface MetricSnapshot {

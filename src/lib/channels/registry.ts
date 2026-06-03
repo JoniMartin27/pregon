@@ -5,22 +5,16 @@ import { slack } from "./adapters/slack";
 import { mastodon } from "./adapters/mastodon";
 import { bluesky } from "./adapters/bluesky";
 import { devto } from "./adapters/devto";
-import {
-  x,
-  threads,
-  linkedin,
-  reddit,
-  hackernews,
-  lobsters,
-  indiehackers,
-} from "./adapters/assisted";
+import { reddit } from "./adapters/reddit";
+import { hashnode } from "./adapters/hashnode";
+import { x, threads, linkedin, hackernews, lobsters, indiehackers } from "./adapters/assisted";
 import { plannedAdapters } from "./adapters/planned";
 
 export const ADAPTERS: ChannelAdapter[] = [
   // 🟢 auto (API)
-  telegram, discord, slack, mastodon, bluesky, devto,
+  telegram, discord, slack, mastodon, bluesky, devto, reddit, hashnode,
   // 🟡 asistido (URL pre-cargada)
-  x, threads, reddit, hackernews, lobsters, linkedin, indiehackers,
+  x, threads, hackernews, lobsters, linkedin, indiehackers,
   // 🔴 próximamente
   ...plannedAdapters,
 ];

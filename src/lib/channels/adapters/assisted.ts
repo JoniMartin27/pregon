@@ -56,25 +56,6 @@ export const linkedin: ChannelAdapter = {
   },
 };
 
-export const reddit: ChannelAdapter = {
-  id: "reddit",
-  name: "Reddit",
-  group: "dev",
-  capability: "assisted",
-  emoji: "👽",
-  credentialFields: [],
-  assistHint:
-    "Abre el envío de Reddit con título y enlace cargados. Elige el subreddit.",
-  composeUrl(c: PublishContent) {
-    const a = adaptContent(c, "reddit");
-    const params = new URLSearchParams();
-    const title = a.title ?? c.body?.slice(0, 300);
-    if (title) params.set("title", title);
-    if (a.link) params.set("url", a.link);
-    return `https://www.reddit.com/submit?${params.toString()}`;
-  },
-};
-
 export const hackernews: ChannelAdapter = {
   id: "hackernews",
   name: "Hacker News",
