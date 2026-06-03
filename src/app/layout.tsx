@@ -34,6 +34,9 @@ export default function RootLayout({
               <Link href="/history" className="hover:text-foreground">
                 Historial
               </Link>
+              <Link href="/accounts" className="hover:text-foreground">
+                Cuentas
+              </Link>
             </nav>
           </div>
         </header>

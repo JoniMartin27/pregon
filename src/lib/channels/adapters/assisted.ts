@@ -88,3 +88,32 @@ export const hackernews: ChannelAdapter = {
     return `https://news.ycombinator.com/submitlink?${params.toString()}`;
   },
 };
+
+export const lobsters: ChannelAdapter = {
+  id: "lobsters",
+  name: "Lobste.rs",
+  group: "dev",
+  capability: "assisted",
+  emoji: "🦞",
+  credentialFields: [],
+  assistHint: "Abre el envío de Lobste.rs con la URL cargada (requiere cuenta/invitación).",
+  composeUrl(c: PublishContent) {
+    const params = new URLSearchParams();
+    if (c.link) params.set("url", c.link);
+    if (c.title) params.set("title", c.title);
+    return `https://lobste.rs/stories/new?${params.toString()}`;
+  },
+};
+
+export const indiehackers: ChannelAdapter = {
+  id: "indiehackers",
+  name: "Indie Hackers",
+  group: "launch",
+  capability: "assisted",
+  emoji: "🧑‍💻",
+  credentialFields: [],
+  assistHint: "Abre el editor de Indie Hackers (no admite pre-carga: pega el texto).",
+  composeUrl() {
+    return "https://www.indiehackers.com/new-post";
+  },
+};

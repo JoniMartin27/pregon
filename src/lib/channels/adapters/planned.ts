@@ -24,8 +24,6 @@ function stub(p: {
 
 export const plannedAdapters: ChannelAdapter[] = [
   stub({ id: "hashnode", name: "Hashnode", group: "dev", emoji: "🔷", capability: "auto", note: "API GraphQL — auto (próximamente)." }),
-  stub({ id: "indiehackers", name: "Indie Hackers", group: "launch", emoji: "🧑‍💻", capability: "assisted", note: "Sin API pública; envío manual." }),
-  stub({ id: "lobsters", name: "Lobste.rs", group: "dev", emoji: "🦞", capability: "assisted", note: "Sin API de publicación; requiere invitación." }),
   stub({ id: "producthunt", name: "Product Hunt", group: "launch", emoji: "😺", capability: "assisted", note: "El lanzamiento es manual; la API solo lee métricas." }),
   stub({ id: "betalist", name: "BetaList", group: "launch", emoji: "📋", capability: "assisted", note: "Envío manual de startups." }),
   stub({ id: "peerlist", name: "Peerlist", group: "launch", emoji: "🟩", capability: "assisted", note: "Envío manual." }),

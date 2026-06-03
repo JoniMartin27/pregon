@@ -5,8 +5,9 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { getAdapter } from "@/lib/channels/registry";
-import { decryptJson } from "@/lib/crypto";
+import { decryptJson, encryptJson } from "@/lib/crypto";
 import { buildContent } from "@/lib/publish";
+import type { ChannelAdapter } from "@/lib/channels/types";
 
 const CreateSchema = z.object({
   projectId: z.string().min(1, "Elige un proyecto"),
@@ -124,6 +125,41 @@ export async function deletePost(formData: FormData) {
   if (!id) return;
   await prisma.post.delete({ where: { id } });
   revalidatePath("/history");
+}
+
+/** Conecta una cuenta en un canal: cifra y guarda sus credenciales. */
+export async function connectAccount(formData: FormData) {
+  const channel = String(formData.get("channel") ?? "");
+  const adapter = getAdapter(channel);
+  if (!adapter) throw new Error("Canal desconocido");
+
+  const creds: Record<string, string> = {};
+  for (const f of adapter.credentialFields) {
+    const v = String(formData.get(f.key) ?? "").trim();
+    if (f.required && !v) throw new Error(`Falta ${f.label}`);
+    if (v) creds[f.key] = v;
+  }
+
+  const label = String(formData.get("label") ?? "").trim() || defaultLabel(adapter, creds);
+  await prisma.account.create({
+    data: { channel, label, credentials: encryptJson(creds), status: "active" },
+  });
+  revalidatePath("/accounts");
+  revalidatePath("/compose");
+}
+
+export async function disconnectAccount(formData: FormData) {
+  const id = String(formData.get("accountId") ?? "");
+  if (!id) return;
+  await prisma.account.delete({ where: { id } });
+  revalidatePath("/accounts");
+  revalidatePath("/compose");
+}
+
+/** Etiqueta legible por defecto a partir de un campo NO secreto, si existe. */
+function defaultLabel(adapter: ChannelAdapter, creds: Record<string, string>): string {
+  const hint = creds.instanceUrl || creds.chatId || creds.identifier;
+  return hint ? `${adapter.name} · ${hint}` : adapter.name;
 }
 
 /** Recalcula el estado agregado del Post según sus Publications. */
