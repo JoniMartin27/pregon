@@ -39,14 +39,16 @@ model Account {
   publications Publication[]
 }
 
-/// El mensaje canónico que queremos difundir.
+/// El mensaje canónico que queremos difundir (o el comentario a publicar).
 model Post {
   id          String    @id @default(cuid())
   project     Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
   projectId   String
+  kind        String    @default("post") // post | comment
   title       String?
   body        String // texto/markdown canónico
-  link        String?
+  link        String? // enlace que promocionas (para kind=post)
+  targetUrl   String? // URL del hilo donde responder (para kind=comment)
   tags        String? // JSON array
   images      String? // JSON array de urls/paths
   status      String    @default("draft") // draft | scheduled | publishing | published | partial | failed
@@ -71,16 +73,17 @@ model Variant {
   @@unique([postId, channel])
 }
 
-/// Un destino concreto de publicación = Post x Account.
+/// Un destino concreto de publicación = Post x canal (con cuenta opcional si es auto).
 model Publication {
   id          String    @id @default(cuid())
   post        Post      @relation(fields: [postId], references: [id], onDelete: Cascade)
   postId      String
-  account     Account   @relation(fields: [accountId], references: [id], onDelete: Cascade)
-  accountId   String
-  status      String    @default("pending") // pending | publishing | published | failed | skipped
+  channel     String // id del adapter destino (siempre presente)
+  account     Account?  @relation(fields: [accountId], references: [id], onDelete: SetNull)
+  accountId   String? // solo canales auto con cuenta conectada
+  status      String    @default("pending") // pending | published | failed | skipped
   externalId  String? // id devuelto por la plataforma
-  externalUrl String? // permalink al post publicado
+  externalUrl String? // permalink al post/comentario publicado
   error       String?
   publishedAt DateTime?
   createdAt   DateTime  @default(now())
