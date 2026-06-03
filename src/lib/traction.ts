@@ -19,6 +19,22 @@ export async function npmDownloads(pkg: string): Promise<NpmStats | null> {
   }
 }
 
+/** Descargas de PyPI (última semana) vía pypistats.org (fuente oficial). */
+export async function pypiDownloads(pkg: string): Promise<NpmStats | null> {
+  try {
+    const res = await fetch(
+      `https://pypistats.org/api/packages/${encodeURIComponent(pkg.toLowerCase())}/recent`,
+      { headers: { "user-agent": "pregon" }, next: { revalidate: 1800 } },
+    );
+    if (!res.ok) return null;
+    const json = await res.json();
+    const weekly = json?.data?.last_week;
+    return typeof weekly === "number" ? { weekly } : null;
+  } catch {
+    return null;
+  }
+}
+
 export async function githubStats(repo: string): Promise<GithubStats | null> {
   try {
     const headers: Record<string, string> = {

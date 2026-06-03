@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { getAdapter } from "@/lib/channels/registry";
 import { addProjectNote, deleteProjectNote, updateProjectLinks } from "@/lib/actions";
-import { npmDownloads, githubStats } from "@/lib/traction";
+import { npmDownloads, pypiDownloads, githubStats } from "@/lib/traction";
 
 export const dynamic = "force-dynamic";
 
@@ -33,8 +33,9 @@ export default async function ProjectPage({
   });
   if (!project) notFound();
 
-  const [npm, gh] = await Promise.all([
+  const [npm, pypi, gh] = await Promise.all([
     project.npmPackage ? npmDownloads(project.npmPackage) : Promise.resolve(null),
+    project.pypiPackage ? pypiDownloads(project.pypiPackage) : Promise.resolve(null),
     project.githubRepo ? githubStats(project.githubRepo) : Promise.resolve(null),
   ]);
 
@@ -70,13 +71,21 @@ export default async function ProjectPage({
       )}
 
       {/* Tracción */}
-      <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
         <Stat label="Publicado" value={String(published)} hint={`${channelsUsed} canales`} />
         {project.npmPackage && (
           <Stat
-            label="npm / semana"
+            label="npm / sem"
             value={npm ? fmt(npm.weekly) : "—"}
             hint={npm ? "⬇ descargas" : "sin datos"}
+            tone="indigo"
+          />
+        )}
+        {project.pypiPackage && (
+          <Stat
+            label="PyPI / sem"
+            value={pypi ? fmt(pypi.weekly) : "—"}
+            hint={pypi ? "⬇ descargas" : "sin datos"}
             tone="indigo"
           />
         )}
@@ -95,11 +104,11 @@ export default async function ProjectPage({
 
       <details className="mt-3 text-sm">
         <summary className="cursor-pointer text-xs text-zinc-500 hover:text-foreground">
-          🔗 Configurar npm / GitHub
+          🔗 Configurar npm / PyPI / GitHub
         </summary>
         <form
           action={updateProjectLinks}
-          className="mt-2 flex flex-col gap-2 rounded-xl border border-zinc-200 bg-white p-3 dark:border-zinc-800 dark:bg-zinc-900 sm:flex-row"
+          className="mt-2 flex flex-col gap-2 rounded-xl border border-zinc-200 bg-white p-3 dark:border-zinc-800 dark:bg-zinc-900"
         >
           <input type="hidden" name="projectId" value={project.id} />
           <input type="hidden" name="slug" value={project.slug} />
@@ -110,14 +119,20 @@ export default async function ProjectPage({
             className={inputCls}
           />
           <input
+            name="pypiPackage"
+            defaultValue={project.pypiPackage ?? ""}
+            placeholder="paquete PyPI (ej. lookspan)"
+            className={inputCls}
+          />
+          <input
             name="githubRepo"
             defaultValue={project.githubRepo ?? ""}
-            placeholder="owner/repo (ej. JoniMartin27/regenta)"
+            placeholder="owner/repo en GitHub (ej. JoniMartin27/regenta)"
             className={inputCls}
           />
           <button
             type="submit"
-            className="shrink-0 rounded-lg bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-indigo-500"
+            className="self-start rounded-lg bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-indigo-500"
           >
             Guardar
           </button>

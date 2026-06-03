@@ -10,6 +10,7 @@ const projects = [
     color: "#6366f1",
     description: "Observabilidad y replay para apps con LLMs.",
     npmPackage: "lookspan",
+    pypiPackage: "lookspan",
     notes: [
       { kind: "message", body: "Mensaje clave: observabilidad y replay local-first para apps con LLMs, MCP-native. Capturas spans/prompts/respuestas y los reproduces." },
       { kind: "decision", body: "En npm v0.4.0 — Datasets & experiments: defines un test set, lanzas un batch, juzgas con LLM-as-judge y ves agregados. Historial: 0.2 multiagente · 0.3 replay/diff+judge · 0.4 datasets." },
@@ -65,7 +66,11 @@ async function main() {
     const { notes, ...data } = p;
     const project = await prisma.project.upsert({
       where: { slug: data.slug },
-      update: { npmPackage: data.npmPackage, githubRepo: data.githubRepo },
+      update: {
+        npmPackage: data.npmPackage,
+        pypiPackage: data.pypiPackage,
+        githubRepo: data.githubRepo,
+      },
       create: data,
     });
     const existing = await prisma.projectNote.count({ where: { projectId: project.id } });

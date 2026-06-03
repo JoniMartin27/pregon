@@ -20,6 +20,7 @@ model Project {
   description String?
   color       String? // hex para la UI
   npmPackage  String? // nombre del paquete en npm (para descargas)
+  pypiPackage String? // nombre del paquete en PyPI (descargas vía pypistats)
   githubRepo  String? // owner/repo en GitHub (para stars/forks)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt

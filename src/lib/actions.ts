@@ -183,13 +183,17 @@ export async function updateProjectLinks(formData: FormData) {
   const slug = String(formData.get("slug") ?? "");
   if (!id) return;
   const npmPackage = String(formData.get("npmPackage") ?? "").trim() || null;
+  const pypiPackage = String(formData.get("pypiPackage") ?? "").trim() || null;
   const raw = String(formData.get("githubRepo") ?? "").trim();
   const githubRepo =
     raw
       .replace(/^https?:\/\/github\.com\//i, "")
       .replace(/\.git$/i, "")
       .replace(/\/+$/, "") || null;
-  await prisma.project.update({ where: { id }, data: { npmPackage, githubRepo } });
+  await prisma.project.update({
+    where: { id },
+    data: { npmPackage, pypiPackage, githubRepo },
+  });
   if (slug) revalidatePath(`/projects/${slug}`);
   revalidatePath("/");
 }
