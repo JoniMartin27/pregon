@@ -1,0 +1,109 @@
+// Pregón — esquema de datos
+// Compose (Post) -> multi-destino (Publication) -> métricas en el tiempo (Metric)
+// SQLite no tiene enums/arrays nativos: usamos strings + JSON.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+/// Un proyecto del que difundimos (Lookspan, Regenta, etc.)
+model Project {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  url         String?
+  description String?
+  color       String? // hex para la UI
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  posts Post[]
+}
+
+/// Una cuenta conectada en una plataforma. Guarda credenciales CIFRADAS (AES-256-GCM).
+model Account {
+  id          String   @id @default(cuid())
+  channel     String // id del adapter: 'telegram' | 'discord' | 'mastodon' | ...
+  label       String // etiqueta legible, ej. "@joni@mastodon.social"
+  credentials String // blob JSON cifrado (token, webhook, etc.)
+  meta        String? // JSON NO secreto (instancia, chat id por defecto, etc.)
+  status      String   @default("active") // active | disabled | error
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  publications Publication[]
+}
+
+/// El mensaje canónico que queremos difundir.
+model Post {
+  id          String    @id @default(cuid())
+  project     Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId   String
+  title       String?
+  body        String // texto/markdown canónico
+  link        String?
+  tags        String? // JSON array
+  images      String? // JSON array de urls/paths
+  status      String    @default("draft") // draft | scheduled | publishing | published | partial | failed
+  scheduledAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  publications Publication[]
+  variants     Variant[]
+
+  @@index([projectId])
+}
+
+/// Override de texto por canal (opcional). Si no existe, se usa Post.body.
+model Variant {
+  id      String @id @default(cuid())
+  post    Post   @relation(fields: [postId], references: [id], onDelete: Cascade)
+  postId  String
+  channel String // id del adapter al que aplica
+  body    String
+
+  @@unique([postId, channel])
+}
+
+/// Un destino concreto de publicación = Post x Account.
+model Publication {
+  id          String    @id @default(cuid())
+  post        Post      @relation(fields: [postId], references: [id], onDelete: Cascade)
+  postId      String
+  account     Account   @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  accountId   String
+  status      String    @default("pending") // pending | publishing | published | failed | skipped
+  externalId  String? // id devuelto por la plataforma
+  externalUrl String? // permalink al post publicado
+  error       String?
+  publishedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  metrics Metric[]
+
+  @@index([postId])
+  @@index([accountId])
+}
+
+/// Snapshot de engagement en el tiempo (serie temporal).
+model Metric {
+  id            String      @id @default(cuid())
+  publication   Publication @relation(fields: [publicationId], references: [id], onDelete: Cascade)
+  publicationId String
+  capturedAt    DateTime    @default(now())
+  likes         Int?
+  comments      Int?
+  shares        Int?
+  views         Int?
+  score         Int? // upvotes / puntos (HN, Reddit, Product Hunt)
+  raw           String? // payload crudo en JSON
+
+  @@index([publicationId, capturedAt])
+}

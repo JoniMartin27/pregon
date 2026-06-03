@@ -1,65 +1,176 @@
-import Image from "next/image";
+import Link from "next/link";
+import { prisma } from "@/lib/db";
+import {
+  ADAPTERS,
+  GROUPS,
+  readiness,
+  type Readiness,
+} from "@/lib/channels/registry";
 
-export default function Home() {
+export const dynamic = "force-dynamic";
+
+const READINESS_LABEL: Record<Readiness, string> = {
+  auto: "Auto",
+  assisted: "Asistido",
+  planned: "Próximamente",
+};
+
+const READINESS_STYLE: Record<Readiness, string> = {
+  auto: "bg-emerald-500/15 text-emerald-600 ring-emerald-500/30 dark:text-emerald-400",
+  assisted: "bg-amber-500/15 text-amber-600 ring-amber-500/30 dark:text-amber-400",
+  planned: "bg-zinc-500/15 text-zinc-500 ring-zinc-500/30 dark:text-zinc-400",
+};
+
+export default async function Home() {
+  const projects = await prisma.project.findMany({ orderBy: { createdAt: "asc" } });
+  const counts = {
+    auto: ADAPTERS.filter((a) => readiness(a) === "auto").length,
+    assisted: ADAPTERS.filter((a) => readiness(a) === "assisted").length,
+    planned: ADAPTERS.filter((a) => readiness(a) === "planned").length,
+  };
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+    <div className="mx-auto w-full max-w-5xl px-6 py-10">
+      <section className="mb-10">
+        <h1 className="text-2xl font-semibold tracking-tight">Centro de difusión</h1>
+        <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+          Redacta una vez, publica en todas tus comunidades y lleva el registro de
+          cada post.
+        </p>
+        <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <Stat label="Proyectos" value={projects.length} />
+          <Stat label="Canales auto" value={counts.auto} tone="emerald" />
+          <Stat label="Asistidos" value={counts.assisted} tone="amber" />
+          <Stat label="Próximamente" value={counts.planned} tone="zinc" />
+        </div>
+      </section>
+
+      <section className="mb-12">
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
+            Proyectos
+          </h2>
+          <Link
+            href="/compose"
+            className="rounded-lg bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-indigo-500"
+          >
+            Componer →
+          </Link>
+        </div>
+        {projects.length === 0 ? (
+          <p className="rounded-xl border border-dashed border-zinc-300 p-6 text-center text-sm text-zinc-500 dark:border-zinc-700">
+            No hay proyectos. Ejecuta <code>npm run db:seed</code> para cargarlos.
           </p>
+        ) : (
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {projects.map((p) => (
+              <div
+                key={p.id}
+                className="rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900"
+              >
+                <div className="flex items-center gap-2">
+                  <span
+                    className="h-2.5 w-2.5 shrink-0 rounded-full"
+                    style={{ backgroundColor: p.color ?? "#a1a1aa" }}
+                  />
+                  <h3 className="font-medium">{p.name}</h3>
+                </div>
+                {p.description && (
+                  <p className="mt-1.5 text-sm text-zinc-500 dark:text-zinc-400">
+                    {p.description}
+                  </p>
+                )}
+                {p.url && (
+                  <a
+                    href={p.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="mt-2 inline-block text-xs text-indigo-500 hover:underline"
+                  >
+                    {prettyUrl(p.url)}
+                  </a>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
+
+      <section>
+        <h2 className="mb-4 text-xs font-semibold uppercase tracking-wider text-zinc-500">
+          Canales ({ADAPTERS.length})
+        </h2>
+        <div className="space-y-7">
+          {GROUPS.map((g) => {
+            const items = ADAPTERS.filter((a) => a.group === g.id);
+            if (items.length === 0) return null;
+            return (
+              <div key={g.id}>
+                <h3 className="mb-3 text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                  {g.label}
+                </h3>
+                <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                  {items.map((a) => {
+                    const r = readiness(a);
+                    return (
+                      <div
+                        key={a.id}
+                        className="flex items-center gap-3 rounded-lg border border-zinc-200 bg-white px-3 py-2.5 dark:border-zinc-800 dark:bg-zinc-900"
+                      >
+                        <span className="text-xl leading-none">{a.emoji}</span>
+                        <div className="min-w-0 flex-1">
+                          <div className="truncate font-medium">{a.name}</div>
+                          {a.maxLength ? (
+                            <div className="text-xs text-zinc-500">
+                              {a.maxLength} caracteres
+                            </div>
+                          ) : null}
+                        </div>
+                        <span
+                          className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ring-1 ${READINESS_STYLE[r]}`}
+                        >
+                          {READINESS_LABEL[r]}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })}
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+      </section>
     </div>
   );
+}
+
+function Stat({
+  label,
+  value,
+  tone = "indigo",
+}: {
+  label: string;
+  value: number;
+  tone?: "indigo" | "emerald" | "amber" | "zinc";
+}) {
+  const toneStyle: Record<string, string> = {
+    indigo: "text-indigo-500",
+    emerald: "text-emerald-500",
+    amber: "text-amber-500",
+    zinc: "text-zinc-500",
+  };
+  return (
+    <div className="rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
+      <div className={`text-2xl font-semibold ${toneStyle[tone]}`}>{value}</div>
+      <div className="mt-0.5 text-xs text-zinc-500">{label}</div>
+    </div>
+  );
+}
+
+function prettyUrl(u: string): string {
+  try {
+    return new URL(u).hostname.replace(/^www\./, "");
+  } catch {
+    return u;
+  }
 }
