@@ -9,6 +9,7 @@ const projects = [
     url: "https://www.npmjs.com/package/lookspan",
     color: "#6366f1",
     description: "Observabilidad y replay para apps con LLMs.",
+    npmPackage: "lookspan",
     notes: [
       { kind: "message", body: "Mensaje clave: observabilidad y replay local-first para apps con LLMs, MCP-native. Capturas spans/prompts/respuestas y los reproduces." },
       { kind: "decision", body: "En npm v0.4.0 — Datasets & experiments: defines un test set, lanzas un batch, juzgas con LLM-as-judge y ves agregados. Historial: 0.2 multiagente · 0.3 replay/diff+judge · 0.4 datasets." },
@@ -21,6 +22,7 @@ const projects = [
     url: "https://jonimartin27.github.io/regenta",
     color: "#0ea5e9",
     description: "Orquestación de flotas de agentes de IA (AGENT-OS).",
+    githubRepo: "JoniMartin27/regenta",
     notes: [
       { kind: "message", body: "Command center que orquesta una flota de 18 agentes IA persistentes (CEO→Coordinador→Directores→Leads→Especialistas)." },
       { kind: "decision", body: "Rebrand de AGENT-OS a 'Regenta' aplicado. Repo producto: regenta-app (privado). Landing pública: jonimartin27.github.io/regenta." },
@@ -63,7 +65,7 @@ async function main() {
     const { notes, ...data } = p;
     const project = await prisma.project.upsert({
       where: { slug: data.slug },
-      update: {},
+      update: { npmPackage: data.npmPackage, githubRepo: data.githubRepo },
       create: data,
     });
     const existing = await prisma.projectNote.count({ where: { projectId: project.id } });
@@ -73,7 +75,7 @@ async function main() {
       });
     }
   }
-  console.log(`Seed OK: ${projects.length} proyectos + notas iniciales`);
+  console.log(`Seed OK: ${projects.length} proyectos + notas + tracción (npm/GitHub)`);
 }
 
 main()

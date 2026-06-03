@@ -2,7 +2,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { getAdapter } from "@/lib/channels/registry";
-import { addProjectNote, deleteProjectNote } from "@/lib/actions";
+import { addProjectNote, deleteProjectNote, updateProjectLinks } from "@/lib/actions";
+import { npmDownloads, githubStats } from "@/lib/traction";
 
 export const dynamic = "force-dynamic";
 
@@ -27,17 +28,20 @@ export default async function ProjectPage({
     where: { slug },
     include: {
       notes: { orderBy: { createdAt: "desc" } },
-      posts: {
-        orderBy: { createdAt: "desc" },
-        include: { publications: true },
-      },
+      posts: { orderBy: { createdAt: "desc" }, include: { publications: true } },
     },
   });
   if (!project) notFound();
 
+  const [npm, gh] = await Promise.all([
+    project.npmPackage ? npmDownloads(project.npmPackage) : Promise.resolve(null),
+    project.githubRepo ? githubStats(project.githubRepo) : Promise.resolve(null),
+  ]);
+
   const allPubs = project.posts.flatMap((p) => p.publications);
   const published = allPubs.filter((p) => p.status === "published").length;
   const channelsUsed = new Set(allPubs.map((p) => p.channel)).size;
+  const fmt = (n: number) => n.toLocaleString("es-ES");
 
   return (
     <div className="mx-auto w-full max-w-3xl px-6 py-10">
@@ -65,11 +69,60 @@ export default async function ProjectPage({
         </a>
       )}
 
-      <div className="mt-5 grid grid-cols-3 gap-3">
-        <Stat label="Publicado" value={String(published)} />
-        <Stat label="Canales usados" value={String(channelsUsed)} />
-        <Stat label="Seguidores" value="—" hint="sin conectar" />
+      {/* Tracción */}
+      <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <Stat label="Publicado" value={String(published)} hint={`${channelsUsed} canales`} />
+        {project.npmPackage && (
+          <Stat
+            label="npm / semana"
+            value={npm ? fmt(npm.weekly) : "—"}
+            hint={npm ? "⬇ descargas" : "sin datos"}
+            tone="indigo"
+          />
+        )}
+        {project.githubRepo && (
+          <>
+            <Stat
+              label="GitHub"
+              value={gh ? fmt(gh.stars) : "—"}
+              hint={gh ? "★ stars" : "sin datos (¿privado?)"}
+              tone="amber"
+            />
+            <Stat label="Forks" value={gh ? fmt(gh.forks) : "—"} hint="🍴" tone="zinc" />
+          </>
+        )}
       </div>
+
+      <details className="mt-3 text-sm">
+        <summary className="cursor-pointer text-xs text-zinc-500 hover:text-foreground">
+          🔗 Configurar npm / GitHub
+        </summary>
+        <form
+          action={updateProjectLinks}
+          className="mt-2 flex flex-col gap-2 rounded-xl border border-zinc-200 bg-white p-3 dark:border-zinc-800 dark:bg-zinc-900 sm:flex-row"
+        >
+          <input type="hidden" name="projectId" value={project.id} />
+          <input type="hidden" name="slug" value={project.slug} />
+          <input
+            name="npmPackage"
+            defaultValue={project.npmPackage ?? ""}
+            placeholder="paquete npm (ej. lookspan)"
+            className={inputCls}
+          />
+          <input
+            name="githubRepo"
+            defaultValue={project.githubRepo ?? ""}
+            placeholder="owner/repo (ej. JoniMartin27/regenta)"
+            className={inputCls}
+          />
+          <button
+            type="submit"
+            className="shrink-0 rounded-lg bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-indigo-500"
+          >
+            Guardar
+          </button>
+        </form>
+      </details>
 
       <section className="mt-8">
         <h2 className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
@@ -166,7 +219,11 @@ export default async function ProjectPage({
                   {post.publications.map((pub) => {
                     const a = getAdapter(pub.channel);
                     return (
-                      <span key={pub.id} className="text-sm" title={`${a?.name ?? pub.channel} · ${pub.status}`}>
+                      <span
+                        key={pub.id}
+                        className="text-sm"
+                        title={`${a?.name ?? pub.channel} · ${pub.status}`}
+                      >
                         {a?.emoji ?? "•"}
                       </span>
                     );
@@ -181,10 +238,26 @@ export default async function ProjectPage({
   );
 }
 
-function Stat({ label, value, hint }: { label: string; value: string; hint?: string }) {
+function Stat({
+  label,
+  value,
+  hint,
+  tone = "default",
+}: {
+  label: string;
+  value: string;
+  hint?: string;
+  tone?: "default" | "indigo" | "amber" | "zinc";
+}) {
+  const toneCls: Record<string, string> = {
+    default: "",
+    indigo: "text-indigo-500",
+    amber: "text-amber-500",
+    zinc: "text-zinc-500",
+  };
   return (
     <div className="rounded-xl border border-zinc-200 bg-white p-3 dark:border-zinc-800 dark:bg-zinc-900">
-      <div className="text-xl font-semibold">{value}</div>
+      <div className={`text-xl font-semibold ${toneCls[tone]}`}>{value}</div>
       <div className="mt-0.5 text-xs text-zinc-500">{label}</div>
       {hint && <div className="text-[10px] text-zinc-400">{hint}</div>}
     </div>

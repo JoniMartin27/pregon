@@ -177,6 +177,23 @@ export async function deleteProjectNote(formData: FormData) {
   revalidatePath("/");
 }
 
+/** Configura el paquete npm y/o el repo GitHub de un proyecto (para tracción). */
+export async function updateProjectLinks(formData: FormData) {
+  const id = String(formData.get("projectId") ?? "");
+  const slug = String(formData.get("slug") ?? "");
+  if (!id) return;
+  const npmPackage = String(formData.get("npmPackage") ?? "").trim() || null;
+  const raw = String(formData.get("githubRepo") ?? "").trim();
+  const githubRepo =
+    raw
+      .replace(/^https?:\/\/github\.com\//i, "")
+      .replace(/\.git$/i, "")
+      .replace(/\/+$/, "") || null;
+  await prisma.project.update({ where: { id }, data: { npmPackage, githubRepo } });
+  if (slug) revalidatePath(`/projects/${slug}`);
+  revalidatePath("/");
+}
+
 /** Etiqueta legible por defecto a partir de un campo NO secreto, si existe. */
 function defaultLabel(adapter: ChannelAdapter, creds: Record<string, string>): string {
   const hint = creds.instanceUrl || creds.chatId || creds.identifier;
