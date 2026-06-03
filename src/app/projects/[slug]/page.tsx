@@ -2,7 +2,12 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { getAdapter } from "@/lib/channels/registry";
-import { addProjectNote, deleteProjectNote, updateProjectLinks } from "@/lib/actions";
+import {
+  addProjectNote,
+  deleteProjectNote,
+  updateProjectLinks,
+  captureNow,
+} from "@/lib/actions";
 import { npmDownloads, pypiDownloads, githubStats } from "@/lib/traction";
 
 export const dynamic = "force-dynamic";
@@ -29,6 +34,7 @@ export default async function ProjectPage({
     include: {
       notes: { orderBy: { createdAt: "desc" } },
       posts: { orderBy: { createdAt: "desc" }, include: { publications: true } },
+      snapshots: { orderBy: { capturedAt: "asc" }, take: 90 },
     },
   });
   if (!project) notFound();
@@ -38,6 +44,11 @@ export default async function ProjectPage({
     project.pypiPackage ? pypiDownloads(project.pypiPackage) : Promise.resolve(null),
     project.githubRepo ? githubStats(project.githubRepo) : Promise.resolve(null),
   ]);
+
+  const series = (key: "npmWeekly" | "pypiWeekly" | "githubStars") =>
+    project.snapshots
+      .map((s) => s[key])
+      .filter((v): v is number => v != null);
 
   const allPubs = project.posts.flatMap((p) => p.publications);
   const published = allPubs.filter((p) => p.status === "published").length;
@@ -71,7 +82,21 @@ export default async function ProjectPage({
       )}
 
       {/* Tracción */}
-      <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+      <div className="mt-6 flex items-center justify-between">
+        <span className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
+          Tracción {project.snapshots.length > 0 && `· ${project.snapshots.length} snapshots`}
+        </span>
+        <form action={captureNow}>
+          <input type="hidden" name="slug" value={project.slug} />
+          <button
+            type="submit"
+            className="rounded-lg border border-zinc-300 px-2.5 py-1 text-xs hover:border-indigo-400 dark:border-zinc-700"
+          >
+            📸 Capturar ahora
+          </button>
+        </form>
+      </div>
+      <div className="mt-2 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
         <Stat label="Publicado" value={String(published)} hint={`${channelsUsed} canales`} />
         {project.npmPackage && (
           <Stat
@@ -79,6 +104,7 @@ export default async function ProjectPage({
             value={npm ? fmt(npm.weekly) : "—"}
             hint={npm ? "⬇ descargas" : "sin datos"}
             tone="indigo"
+            series={series("npmWeekly")}
           />
         )}
         {project.pypiPackage && (
@@ -87,6 +113,7 @@ export default async function ProjectPage({
             value={pypi ? fmt(pypi.weekly) : "—"}
             hint={pypi ? "⬇ descargas" : "sin datos"}
             tone="indigo"
+            series={series("pypiWeekly")}
           />
         )}
         {project.githubRepo && (
@@ -96,6 +123,7 @@ export default async function ProjectPage({
               value={gh ? fmt(gh.stars) : "—"}
               hint={gh ? "★ stars" : "sin datos (¿privado?)"}
               tone="amber"
+              series={series("githubStars")}
             />
             <Stat label="Forks" value={gh ? fmt(gh.forks) : "—"} hint="🍴" tone="zinc" />
           </>
@@ -258,11 +286,13 @@ function Stat({
   value,
   hint,
   tone = "default",
+  series,
 }: {
   label: string;
   value: string;
   hint?: string;
   tone?: "default" | "indigo" | "amber" | "zinc";
+  series?: number[];
 }) {
   const toneCls: Record<string, string> = {
     default: "",
@@ -270,12 +300,50 @@ function Stat({
     amber: "text-amber-500",
     zinc: "text-zinc-500",
   };
+  const toneHex: Record<string, string> = {
+    default: "#71717a",
+    indigo: "#6366f1",
+    amber: "#f59e0b",
+    zinc: "#71717a",
+  };
   return (
     <div className="rounded-xl border border-zinc-200 bg-white p-3 dark:border-zinc-800 dark:bg-zinc-900">
       <div className={`text-xl font-semibold ${toneCls[tone]}`}>{value}</div>
       <div className="mt-0.5 text-xs text-zinc-500">{label}</div>
       {hint && <div className="text-[10px] text-zinc-400">{hint}</div>}
+      {series && series.length > 0 && (
+        <div className="mt-1.5">
+          <Sparkline values={series} color={toneHex[tone]} />
+        </div>
+      )}
     </div>
+  );
+}
+
+function Sparkline({ values, color }: { values: number[]; color: string }) {
+  const w = 96;
+  const h = 24;
+  const pad = 2;
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  const range = max - min || 1;
+  const x = (i: number) =>
+    values.length === 1 ? w / 2 : pad + (i / (values.length - 1)) * (w - 2 * pad);
+  const y = (v: number) => h - pad - ((v - min) / range) * (h - 2 * pad);
+
+  if (values.length === 1) {
+    return (
+      <svg width={w} height={h}>
+        <circle cx={w / 2} cy={h / 2} r={2.5} fill={color} />
+      </svg>
+    );
+  }
+  const points = values.map((v, i) => `${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(" ");
+  return (
+    <svg width={w} height={h}>
+      <polyline points={points} fill="none" stroke={color} strokeWidth={1.5} strokeLinejoin="round" />
+      <circle cx={x(values.length - 1)} cy={y(values[values.length - 1])} r={2} fill={color} />
+    </svg>
   );
 }
 

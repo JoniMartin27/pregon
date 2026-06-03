@@ -25,8 +25,9 @@ model Project {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  posts Post[]
-  notes ProjectNote[]
+  posts     Post[]
+  notes     ProjectNote[]
+  snapshots ProjectSnapshot[]
 }
 
 /// Registro de lo que hemos hablado/decidido sobre un proyecto:
@@ -40,6 +41,20 @@ model ProjectNote {
   createdAt DateTime @default(now())
 
   @@index([projectId])
+}
+
+/// Snapshot de tracción de un proyecto en el tiempo (crecimiento).
+model ProjectSnapshot {
+  id          String   @id @default(cuid())
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId   String
+  capturedAt  DateTime @default(now())
+  npmWeekly   Int?
+  pypiWeekly  Int?
+  githubStars Int?
+  githubForks Int?
+
+  @@index([projectId, capturedAt])
 }
 
 /// Una cuenta conectada en una plataforma. Guarda credenciales CIFRADAS (AES-256-GCM).
@@ -112,7 +127,7 @@ model Publication {
   @@index([accountId])
 }
 
-/// Snapshot de engagement en el tiempo (serie temporal).
+/// Snapshot de engagement de UNA publicación en el tiempo (serie temporal).
 model Metric {
   id            String      @id @default(cuid())
   publication   Publication @relation(fields: [publicationId], references: [id], onDelete: Cascade)

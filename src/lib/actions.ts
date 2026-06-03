@@ -7,6 +7,7 @@ import { prisma } from "@/lib/db";
 import { getAdapter } from "@/lib/channels/registry";
 import { decryptJson, encryptJson } from "@/lib/crypto";
 import { buildContent } from "@/lib/publish";
+import { captureSnapshots } from "@/lib/snapshot";
 import type { ChannelAdapter } from "@/lib/channels/types";
 
 const CreateSchema = z.object({
@@ -194,6 +195,14 @@ export async function updateProjectLinks(formData: FormData) {
     where: { id },
     data: { npmPackage, pypiPackage, githubRepo },
   });
+  if (slug) revalidatePath(`/projects/${slug}`);
+  revalidatePath("/");
+}
+
+/** Captura un snapshot de tracción ahora mismo (botón manual). */
+export async function captureNow(formData: FormData) {
+  const slug = String(formData.get("slug") ?? "");
+  await captureSnapshots();
   if (slug) revalidatePath(`/projects/${slug}`);
   revalidatePath("/");
 }

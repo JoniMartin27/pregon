@@ -1,15 +1,15 @@
-// Tracción pública por proyecto: descargas de npm y stats de GitHub.
-// APIs públicas; GitHub usa GITHUB_TOKEN del .env si está presente
-// (necesario para repos privados y para subir el rate limit).
+// Tracción pública por proyecto: descargas de npm/PyPI y stats de GitHub.
+// APIs públicas; GitHub usa GITHUB_TOKEN del .env si está (repos privados / rate limit).
+// `fresh=true` salta la caché (para capturar snapshots de crecimiento).
 
 export type NpmStats = { weekly: number };
 export type GithubStats = { stars: number; forks: number; issues: number };
 
-export async function npmDownloads(pkg: string): Promise<NpmStats | null> {
+export async function npmDownloads(pkg: string, fresh = false): Promise<NpmStats | null> {
   try {
     const res = await fetch(
       `https://api.npmjs.org/downloads/point/last-week/${encodeURIComponent(pkg)}`,
-      { next: { revalidate: 1800 } },
+      fresh ? { cache: "no-store" } : { next: { revalidate: 1800 } },
     );
     if (!res.ok) return null;
     const json = await res.json();
@@ -20,11 +20,13 @@ export async function npmDownloads(pkg: string): Promise<NpmStats | null> {
 }
 
 /** Descargas de PyPI (última semana) vía pypistats.org (fuente oficial). */
-export async function pypiDownloads(pkg: string): Promise<NpmStats | null> {
+export async function pypiDownloads(pkg: string, fresh = false): Promise<NpmStats | null> {
   try {
     const res = await fetch(
       `https://pypistats.org/api/packages/${encodeURIComponent(pkg.toLowerCase())}/recent`,
-      { headers: { "user-agent": "pregon" }, next: { revalidate: 1800 } },
+      fresh
+        ? { headers: { "user-agent": "pregon" }, cache: "no-store" }
+        : { headers: { "user-agent": "pregon" }, next: { revalidate: 1800 } },
     );
     if (!res.ok) return null;
     const json = await res.json();
@@ -35,7 +37,7 @@ export async function pypiDownloads(pkg: string): Promise<NpmStats | null> {
   }
 }
 
-export async function githubStats(repo: string): Promise<GithubStats | null> {
+export async function githubStats(repo: string, fresh = false): Promise<GithubStats | null> {
   try {
     const headers: Record<string, string> = {
       accept: "application/vnd.github+json",
@@ -43,10 +45,10 @@ export async function githubStats(repo: string): Promise<GithubStats | null> {
     };
     const token = process.env.GITHUB_TOKEN;
     if (token) headers.authorization = `Bearer ${token}`;
-    const res = await fetch(`https://api.github.com/repos/${repo}`, {
-      headers,
-      next: { revalidate: 1800 },
-    });
+    const res = await fetch(
+      `https://api.github.com/repos/${repo}`,
+      fresh ? { headers, cache: "no-store" } : { headers, next: { revalidate: 1800 } },
+    );
     if (!res.ok) return null;
     const json = await res.json();
     return {
