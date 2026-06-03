@@ -22,7 +22,10 @@ const READINESS_STYLE: Record<Readiness, string> = {
 };
 
 export default async function Home() {
-  const projects = await prisma.project.findMany({ orderBy: { createdAt: "asc" } });
+  const projects = await prisma.project.findMany({
+    orderBy: { createdAt: "asc" },
+    include: { _count: { select: { posts: true, notes: true } } },
+  });
   const counts = {
     auto: ADAPTERS.filter((a) => readiness(a) === "auto").length,
     assisted: ADAPTERS.filter((a) => readiness(a) === "assisted").length,
@@ -64,9 +67,10 @@ export default async function Home() {
         ) : (
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {projects.map((p) => (
-              <div
+              <Link
                 key={p.id}
-                className="rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900"
+                href={`/projects/${p.slug}`}
+                className="block rounded-xl border border-zinc-200 bg-white p-4 transition hover:border-indigo-400 dark:border-zinc-800 dark:bg-zinc-900"
               >
                 <div className="flex items-center gap-2">
                   <span
@@ -76,21 +80,14 @@ export default async function Home() {
                   <h3 className="font-medium">{p.name}</h3>
                 </div>
                 {p.description && (
-                  <p className="mt-1.5 text-sm text-zinc-500 dark:text-zinc-400">
+                  <p className="mt-1.5 line-clamp-2 text-sm text-zinc-500 dark:text-zinc-400">
                     {p.description}
                   </p>
                 )}
-                {p.url && (
-                  <a
-                    href={p.url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="mt-2 inline-block text-xs text-indigo-500 hover:underline"
-                  >
-                    {prettyUrl(p.url)}
-                  </a>
-                )}
-              </div>
+                <div className="mt-2 text-xs text-zinc-400">
+                  {p._count.notes} notas · {p._count.posts} posts
+                </div>
+              </Link>
             ))}
           </div>
         )}
@@ -165,12 +162,4 @@ function Stat({
       <div className="mt-0.5 text-xs text-zinc-500">{label}</div>
     </div>
   );
-}
-
-function prettyUrl(u: string): string {
-  try {
-    return new URL(u).hostname.replace(/^www\./, "");
-  } catch {
-    return u;
-  }
 }

@@ -156,6 +156,27 @@ export async function disconnectAccount(formData: FormData) {
   revalidatePath("/compose");
 }
 
+/** Añade una nota al registro "lo que hemos hablado" de un proyecto. */
+export async function addProjectNote(formData: FormData) {
+  const projectId = String(formData.get("projectId") ?? "");
+  const slug = String(formData.get("slug") ?? "");
+  const body = String(formData.get("body") ?? "").trim();
+  const kind = String(formData.get("kind") ?? "note");
+  if (!projectId || !body) return;
+  await prisma.projectNote.create({ data: { projectId, body, kind } });
+  if (slug) revalidatePath(`/projects/${slug}`);
+  revalidatePath("/");
+}
+
+export async function deleteProjectNote(formData: FormData) {
+  const id = String(formData.get("noteId") ?? "");
+  const slug = String(formData.get("slug") ?? "");
+  if (!id) return;
+  await prisma.projectNote.delete({ where: { id } });
+  if (slug) revalidatePath(`/projects/${slug}`);
+  revalidatePath("/");
+}
+
 /** Etiqueta legible por defecto a partir de un campo NO secreto, si existe. */
 function defaultLabel(adapter: ChannelAdapter, creds: Record<string, string>): string {
   const hint = creds.instanceUrl || creds.chatId || creds.identifier;

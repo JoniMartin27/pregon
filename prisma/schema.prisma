@@ -23,6 +23,20 @@ model Project {
   updatedAt   DateTime @updatedAt
 
   posts Post[]
+  notes ProjectNote[]
+}
+
+/// Registro de lo que hemos hablado/decidido sobre un proyecto:
+/// mensajes clave, ángulos, ideas, pendientes. Es la "memoria de difusión".
+model ProjectNote {
+  id        String   @id @default(cuid())
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId String
+  kind      String   @default("note") // note | message | idea | decision | todo
+  body      String
+  createdAt DateTime @default(now())
+
+  @@index([projectId])
 }
 
 /// Una cuenta conectada en una plataforma. Guarda credenciales CIFRADAS (AES-256-GCM).
