@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { createPost } from "@/lib/actions";
+import { adaptContent } from "@/lib/channels/adapt";
+import type { PublishContent } from "@/lib/channels/types";
 
 type Channel = {
   id: string;
@@ -30,13 +32,14 @@ export function ComposeForm({
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
   const [link, setLink] = useState("");
+  const [tags, setTags] = useState("");
   const [selected, setSelected] = useState<Set<string>>(new Set());
 
-  // Longitud aproximada del texto que se enviaría (título + cuerpo + enlace).
-  const baseLen =
-    (title ? title.length + 2 : 0) +
-    body.length +
-    (kind === "post" && link ? link.length + 2 : 0);
+  const tagsArr = tags.split(",").map((t) => t.trim()).filter(Boolean);
+  const content: PublishContent =
+    kind === "post"
+      ? { title: title || undefined, body, link: link || undefined, tags: tagsArr }
+      : { body };
 
   function toggle(id: string) {
     setSelected((prev) => {
@@ -46,6 +49,8 @@ export function ComposeForm({
       return next;
     });
   }
+
+  const selectedChannels = channels.filter((c) => selected.has(c.id));
 
   return (
     <form action={createPost} className="mt-6 space-y-6">
@@ -92,7 +97,7 @@ export function ComposeForm({
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             className={inputCls}
-            placeholder="Show HN: Lookspan — observabilidad para apps con LLMs"
+            placeholder="Show HN: Lookspan — observabilidad y replay para apps con LLMs"
           />
         </label>
       )}
@@ -113,19 +118,33 @@ export function ComposeForm({
       </label>
 
       {kind === "post" ? (
-        <label className="block">
-          <span className="text-sm font-medium">
-            Enlace <span className="text-zinc-400">(opcional)</span>
-          </span>
-          <input
-            name="link"
-            type="url"
-            value={link}
-            onChange={(e) => setLink(e.target.value)}
-            placeholder="https://…"
-            className={inputCls}
-          />
-        </label>
+        <>
+          <label className="block">
+            <span className="text-sm font-medium">
+              Enlace <span className="text-zinc-400">(opcional)</span>
+            </span>
+            <input
+              name="link"
+              type="url"
+              value={link}
+              onChange={(e) => setLink(e.target.value)}
+              placeholder="https://…"
+              className={inputCls}
+            />
+          </label>
+          <label className="block">
+            <span className="text-sm font-medium">
+              Tags <span className="text-zinc-400">(separados por coma, opcional)</span>
+            </span>
+            <input
+              name="tags"
+              value={tags}
+              onChange={(e) => setTags(e.target.value)}
+              placeholder="llm, observability, devtools"
+              className={inputCls}
+            />
+          </label>
+        </>
       ) : (
         <label className="block">
           <span className="text-sm font-medium">URL del hilo</span>
@@ -142,13 +161,6 @@ export function ComposeForm({
         </label>
       )}
 
-      <label className="block">
-        <span className="text-sm font-medium">
-          Tags <span className="text-zinc-400">(separados por coma, opcional)</span>
-        </span>
-        <input name="tags" placeholder="llm, observability, devtools" className={inputCls} />
-      </label>
-
       <div>
         <span className="text-sm font-medium">Canales</span>
         <div className="mt-2 space-y-4">
@@ -162,7 +174,7 @@ export function ComposeForm({
                 </div>
                 <div className="grid gap-2 sm:grid-cols-2">
                   {items.map((c) => {
-                    const over = c.maxLength != null && baseLen > c.maxLength;
+                    const a = adaptContent(content, c.id);
                     const isSel = selected.has(c.id);
                     return (
                       <label
@@ -190,11 +202,11 @@ export function ComposeForm({
                         ) : (
                           <span className="text-xs text-amber-500">asistido</span>
                         )}
-                        {c.maxLength != null && (
+                        {a.limit != null && (
                           <span
-                            className={`text-xs tabular-nums ${over ? "font-semibold text-red-500" : "text-zinc-400"}`}
+                            className={`text-xs tabular-nums ${a.overLimit ? "font-semibold text-red-500" : "text-zinc-400"}`}
                           >
-                            {baseLen}/{c.maxLength}
+                            {a.length}/{a.limit}
                           </span>
                         )}
                       </label>
@@ -207,6 +219,62 @@ export function ComposeForm({
         </div>
       </div>
 
+      {selectedChannels.length > 0 && (body.trim() || title.trim()) && (
+        <div>
+          <span className="text-sm font-medium">Vista previa por canal</span>
+          <div className="mt-2 space-y-2">
+            {selectedChannels.map((c) => {
+              const a = adaptContent(content, c.id);
+              return (
+                <div
+                  key={c.id}
+                  className="rounded-lg border border-zinc-200 p-3 dark:border-zinc-800"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">
+                      {c.emoji} {c.name}
+                    </span>
+                    {a.limit != null && (
+                      <span
+                        className={`text-xs tabular-nums ${a.overLimit ? "font-semibold text-red-500" : "text-zinc-400"}`}
+                      >
+                        {a.length}/{a.limit}
+                      </span>
+                    )}
+                  </div>
+                  {a.title && (
+                    <div className="mt-1.5 text-xs">
+                      <span className="font-semibold text-zinc-500">Título:</span> {a.title}
+                    </div>
+                  )}
+                  <pre className="mt-1 whitespace-pre-wrap break-words font-sans text-xs text-zinc-600 dark:text-zinc-300">
+                    {a.text || <span className="text-zinc-400">(sin cuerpo)</span>}
+                  </pre>
+                  {a.link && (
+                    <div className="truncate text-xs text-indigo-500">🔗 {a.link}</div>
+                  )}
+                  {a.tags?.length ? (
+                    <div className="text-xs text-zinc-400">tags: {a.tags.join(", ")}</div>
+                  ) : null}
+                  {a.notes.length > 0 && (
+                    <div className="mt-1.5 flex flex-wrap gap-1">
+                      {a.notes.map((n, i) => (
+                        <span
+                          key={i}
+                          className="rounded bg-zinc-500/10 px-1.5 py-0.5 text-[10px] text-zinc-500"
+                        >
+                          {n}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       <div className="flex flex-wrap items-center gap-3">
         <button
           type="submit"
@@ -216,7 +284,7 @@ export function ComposeForm({
           Crear y publicar
         </button>
         <span className="text-xs text-zinc-500">
-          {selected.size} canal(es) · auto publica ya; asistido genera enlaces en Historial
+          {selected.size} canal(es) · cada uno se adapta a su plataforma
         </span>
       </div>
     </form>

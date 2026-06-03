@@ -1,4 +1,5 @@
 import type { ChannelAdapter } from "../types";
+import { adaptContent } from "../adapt";
 
 export const devto: ChannelAdapter = {
   id: "devto",
@@ -17,16 +18,17 @@ export const devto: ChannelAdapter = {
     },
   ],
   async publish({ content, credentials }) {
+    const a = adaptContent(content, "devto");
     const res = await fetch("https://dev.to/api/articles", {
       method: "POST",
       headers: { "content-type": "application/json", "api-key": credentials.apiKey },
       body: JSON.stringify({
         article: {
-          title: content.title ?? "(sin título)",
+          title: a.title ?? "(sin título)",
           published: true,
-          body_markdown: content.body + (content.link ? `\n\n${content.link}` : ""),
-          tags: (content.tags ?? []).slice(0, 4),
-          canonical_url: content.link,
+          body_markdown: a.text,
+          tags: a.tags ?? [],
+          canonical_url: a.link,
         },
       }),
     });

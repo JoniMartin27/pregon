@@ -1,5 +1,5 @@
 import type { ChannelAdapter } from "../types";
-import { plainText, truncate } from "../format";
+import { adaptContent } from "../adapt";
 
 export const mastodon: ChannelAdapter = {
   id: "mastodon",
@@ -27,14 +27,14 @@ export const mastodon: ChannelAdapter = {
   ],
   async publish({ content, credentials }) {
     const instance = credentials.instanceUrl.replace(/\/+$/, "");
-    const status = truncate(plainText(content), 500);
+    const a = adaptContent(content, "mastodon");
     const res = await fetch(`${instance}/api/v1/statuses`, {
       method: "POST",
       headers: {
         "content-type": "application/json",
         authorization: `Bearer ${credentials.accessToken}`,
       },
-      body: JSON.stringify({ status }),
+      body: JSON.stringify({ status: a.text }),
     });
     const json = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(json.error ?? `Mastodon error ${res.status}`);

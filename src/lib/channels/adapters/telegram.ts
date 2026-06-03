@@ -1,5 +1,5 @@
 import type { ChannelAdapter } from "../types";
-import { plainText, truncate } from "../format";
+import { adaptContent } from "../adapt";
 
 export const telegram: ChannelAdapter = {
   id: "telegram",
@@ -27,13 +27,13 @@ export const telegram: ChannelAdapter = {
     },
   ],
   async publish({ content, credentials, meta }) {
-    const text = truncate(plainText(content), 4096);
+    const a = adaptContent(content, "telegram");
     const res = await fetch(
       `https://api.telegram.org/bot${credentials.botToken}/sendMessage`,
       {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ chat_id: credentials.chatId, text }),
+        body: JSON.stringify({ chat_id: credentials.chatId, text: a.text }),
       },
     );
     const json = await res.json();

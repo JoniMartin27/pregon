@@ -1,9 +1,9 @@
 import type { ChannelAdapter, PublishContent } from "../types";
+import { adaptContent } from "../adapt";
 
 // Canales sin API de publicación abierta: abrimos el compositor con el texto
-// pre-cargado vía URL (intent / submit). El usuario publica y pega el enlace.
-
-const enc = encodeURIComponent;
+// ya adaptado a la plataforma vía URL (intent / submit). El usuario publica y
+// pega el enlace para registrarlo.
 
 export const x: ChannelAdapter = {
   id: "x",
@@ -14,11 +14,11 @@ export const x: ChannelAdapter = {
   maxLength: 280,
   credentialFields: [],
   assistHint:
-    "Abre el compositor de X con el texto cargado. Publica y pega el enlace para registrarlo.",
+    "Abre el compositor de X con el texto adaptado (≤280, link como adjunto). Publica y pega el enlace.",
   composeUrl(c: PublishContent) {
-    const text = [c.title, c.body].filter(Boolean).join(" — ");
-    const params = new URLSearchParams({ text });
-    if (c.link) params.set("url", c.link);
+    const a = adaptContent(c, "x");
+    const params = new URLSearchParams({ text: a.text });
+    if (a.link) params.set("url", a.link);
     return `https://twitter.com/intent/tweet?${params.toString()}`;
   },
 };
@@ -31,10 +31,10 @@ export const threads: ChannelAdapter = {
   emoji: "🧵",
   maxLength: 500,
   credentialFields: [],
-  assistHint: "Abre Threads con el texto cargado.",
+  assistHint: "Abre Threads con el texto adaptado cargado.",
   composeUrl(c: PublishContent) {
-    const text = [c.title, c.body, c.link].filter(Boolean).join("\n\n");
-    return `https://www.threads.net/intent/post?text=${enc(text)}`;
+    const a = adaptContent(c, "threads");
+    return `https://www.threads.net/intent/post?text=${encodeURIComponent(a.text)}`;
   },
 };
 
@@ -46,10 +46,11 @@ export const linkedin: ChannelAdapter = {
   emoji: "💼",
   credentialFields: [],
   assistHint:
-    "LinkedIn solo pre-carga el enlace; pega el texto manualmente al abrir el compositor.",
+    "LinkedIn solo pre-carga el enlace; pega el texto adaptado manualmente al abrir el compositor.",
   composeUrl(c: PublishContent) {
-    if (c.link) {
-      return `https://www.linkedin.com/sharing/share-offsite/?url=${enc(c.link)}`;
+    const a = adaptContent(c, "linkedin");
+    if (a.link) {
+      return `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(a.link)}`;
     }
     return "https://www.linkedin.com/feed/?shareActive=true";
   },
@@ -63,11 +64,13 @@ export const reddit: ChannelAdapter = {
   emoji: "👽",
   credentialFields: [],
   assistHint:
-    "Abre el formulario de envío de Reddit con título y enlace cargados. Elige el subreddit.",
+    "Abre el envío de Reddit con título y enlace cargados. Elige el subreddit.",
   composeUrl(c: PublishContent) {
+    const a = adaptContent(c, "reddit");
     const params = new URLSearchParams();
-    if (c.title) params.set("title", c.title);
-    if (c.link) params.set("url", c.link);
+    const title = a.title ?? c.body?.slice(0, 300);
+    if (title) params.set("title", title);
+    if (a.link) params.set("url", a.link);
     return `https://www.reddit.com/submit?${params.toString()}`;
   },
 };
@@ -80,11 +83,12 @@ export const hackernews: ChannelAdapter = {
   emoji: "🟧",
   credentialFields: [],
   assistHint:
-    "Abre 'submit' de HN con título y URL. Para Show HN antepón 'Show HN:' al título.",
+    "Abre 'submit' de HN con título (≤80) y URL. Para Show HN antepón 'Show HN:' al título.",
   composeUrl(c: PublishContent) {
+    const a = adaptContent(c, "hackernews");
     const params = new URLSearchParams();
-    if (c.link) params.set("u", c.link);
-    if (c.title) params.set("t", c.title);
+    if (a.link) params.set("u", a.link);
+    if (a.title) params.set("t", a.title);
     return `https://news.ycombinator.com/submitlink?${params.toString()}`;
   },
 };
@@ -98,9 +102,10 @@ export const lobsters: ChannelAdapter = {
   credentialFields: [],
   assistHint: "Abre el envío de Lobste.rs con la URL cargada (requiere cuenta/invitación).",
   composeUrl(c: PublishContent) {
+    const a = adaptContent(c, "lobsters");
     const params = new URLSearchParams();
-    if (c.link) params.set("url", c.link);
-    if (c.title) params.set("title", c.title);
+    if (a.link) params.set("url", a.link);
+    if (a.title) params.set("title", a.title);
     return `https://lobste.rs/stories/new?${params.toString()}`;
   },
 };

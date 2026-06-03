@@ -1,5 +1,5 @@
 import type { ChannelAdapter } from "../types";
-import { plainText } from "../format";
+import { adaptContent } from "../adapt";
 
 export const slack: ChannelAdapter = {
   id: "slack",
@@ -18,10 +18,11 @@ export const slack: ChannelAdapter = {
     },
   ],
   async publish({ content, credentials }) {
+    const a = adaptContent(content, "slack");
     const res = await fetch(credentials.webhookUrl, {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ text: plainText(content) }),
+      body: JSON.stringify({ text: a.text }),
     });
     if (!res.ok) {
       throw new Error(`Slack error ${res.status}: ${await res.text()}`);

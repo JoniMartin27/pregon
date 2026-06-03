@@ -1,5 +1,5 @@
 import type { ChannelAdapter } from "../types";
-import { plainText, truncate } from "../format";
+import { adaptContent } from "../adapt";
 
 export const discord: ChannelAdapter = {
   id: "discord",
@@ -20,11 +20,11 @@ export const discord: ChannelAdapter = {
     },
   ],
   async publish({ content, credentials }) {
-    const body = truncate(plainText(content), 2000);
+    const a = adaptContent(content, "discord");
     const res = await fetch(`${credentials.webhookUrl}?wait=true`, {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ content: body }),
+      body: JSON.stringify({ content: a.text }),
     });
     if (!res.ok) {
       throw new Error(`Discord error ${res.status}: ${await res.text()}`);

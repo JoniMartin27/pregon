@@ -1,5 +1,5 @@
 import type { ChannelAdapter } from "../types";
-import { plainText, truncate } from "../format";
+import { adaptContent } from "../adapt";
 
 const PDS = "https://bsky.social";
 
@@ -28,7 +28,6 @@ export const bluesky: ChannelAdapter = {
     },
   ],
   async publish({ content, credentials }) {
-    // 1) Crear sesión
     const sessRes = await fetch(`${PDS}/xrpc/com.atproto.server.createSession`, {
       method: "POST",
       headers: { "content-type": "application/json" },
@@ -40,8 +39,7 @@ export const bluesky: ChannelAdapter = {
     const sess = await sessRes.json().catch(() => ({}));
     if (!sessRes.ok) throw new Error(sess.message ?? `Bluesky login error ${sessRes.status}`);
 
-    // 2) Crear post
-    const text = truncate(plainText(content), 300);
+    const a = adaptContent(content, "bluesky");
     const recRes = await fetch(`${PDS}/xrpc/com.atproto.repo.createRecord`, {
       method: "POST",
       headers: {
@@ -53,7 +51,7 @@ export const bluesky: ChannelAdapter = {
         collection: "app.bsky.feed.post",
         record: {
           $type: "app.bsky.feed.post",
-          text,
+          text: a.text,
           createdAt: new Date().toISOString(),
         },
       }),
