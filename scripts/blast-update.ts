@@ -21,6 +21,7 @@ const TAGS = (process.env.TAGS ?? "llm,observability,ai")
 const EXCLUDE = new Set(
   (process.env.EXCLUDE ?? "devto").split(",").map((t) => t.trim()).filter(Boolean),
 );
+const PROJECT = process.env.PROJECT?.trim() || "lookspan";
 
 async function main() {
   if (!BODY) {
@@ -36,8 +37,8 @@ async function main() {
     return;
   }
 
-  const project = await prisma.project.findUnique({ where: { slug: "lookspan" } });
-  if (!project) throw new Error("no existe el proyecto lookspan");
+  const project = await prisma.project.findUnique({ where: { slug: PROJECT } });
+  if (!project) throw new Error(`no existe el proyecto ${PROJECT}`);
 
   const post = await prisma.post.create({
     data: {
