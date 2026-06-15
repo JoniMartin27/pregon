@@ -9,7 +9,11 @@
     "lint": "eslint",
     "db:seed": "prisma db seed",
     "db:studio": "prisma studio",
-    "db:reset": "prisma migrate reset"
+    "db:reset": "prisma migrate reset",
+    "reddit:connect": "tsx scripts/reddit-connect.ts",
+    "reddit:radar": "tsx scripts/reddit-radar.ts",
+    "reddit:health": "tsx scripts/reddit-health.ts",
+    "reddit:schedule": "tsx scripts/reddit-scheduler.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
