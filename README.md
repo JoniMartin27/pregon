@@ -1,5 +1,7 @@
 # Pregón
 
+![License](https://img.shields.io/github/license/JoniMartin27/pregon)
+
 > Cross-poster centralizado + seguimiento de tracción para tus proyectos OSS.
 
 Pregón es un panel local para **componer una vez y publicar en muchos canales**,
@@ -98,3 +100,7 @@ Abre <http://localhost:4040>.
 ## Licencia
 
 MIT
+
+---
+
+Part of [Fervon](https://fervon.dev) — a portfolio of local-first developer tools.
