@@ -1,8 +1,33 @@
 @import "tailwindcss";
 
+/*
+  ── Identidad de marca Fervon ────────────────────────────────────────────
+  Forjado al rojo vivo. Paleta "carbón + brasa" del estudio Fervon.
+  Re-skin: remapeamos la escala de color de Tailwind (zinc / indigo /
+  emerald / amber / etc.) a los tonos de la forja, así toda la UI hereda
+  la marca sin reescribir cada clase. La funcionalidad y el contenido
+  permanecen intactos.
+  Fuente de verdad: https://fervon.dev  ·  proyects/fervon/index.css
+*/
+
 :root {
-  --background: #fafafa;
-  --foreground: #18181b;
+  /* Tokens canónicos Fervon */
+  --carbon: #0e0b0a;
+  --carbon-2: #16110e;
+  --card: #1a1310;
+  --line: #2c211b;
+  --line2: #3a2c22;
+  --ember: #ff6a00;
+  --brasa: #e0480f;
+  --amber: #ffb02e;
+  --bone: #efe7dc;
+  --ash: #a89a8e;
+  --dim: #94867a;
+  /* Acento de producto de Pregón en Fervon: coral */
+  --ac: #ff8a66;
+
+  --background: var(--carbon);
+  --foreground: var(--bone);
 }
 
 @theme inline {
@@ -10,17 +35,93 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #09090b;
-    --foreground: #ededed;
-  }
+  /* ── Remapeo de la escala de color a la forja ──────────────────────── */
+  /* Neutros: del carbón a la ceniza */
+  --color-white: #1a1310;
+  --color-zinc-50: #1f1714;
+  --color-zinc-100: #2c211b;
+  --color-zinc-200: #2c211b;
+  --color-zinc-300: #3a2c22;
+  --color-zinc-400: #94867a;
+  --color-zinc-500: #a89a8e;
+  --color-zinc-600: #c7b9ab;
+  --color-zinc-700: #c7b9ab;
+  --color-zinc-800: #2c211b;
+  --color-zinc-900: #1a1310;
+  --color-zinc-950: #16110e;
+
+  /* Acento primario (era índigo) → brasa/ember */
+  --color-indigo-400: #ff8a66;
+  --color-indigo-500: #ff6a00;
+  --color-indigo-600: #e0480f;
+
+  /* Ámbar Fervon (asistido / GitHub) */
+  --color-amber-400: #ffb02e;
+  --color-amber-500: #ffb02e;
+  --color-amber-600: #ffb02e;
+
+  /* Verde "auto" → verde forja apagado */
+  --color-emerald-400: #a6d585;
+  --color-emerald-500: #8fc86b;
+  --color-emerald-600: #a6d585;
+
+  /* Tonos secundarios suavizados a la paleta cálida */
+  --color-sky-500: #5bc8d8;
+  --color-rose-500: #ff6a6a;
+  --color-red-400: #ff8a66;
+  --color-red-500: #ff5a3c;
 }
 
 body {
-  background: var(--background);
+  background:
+    radial-gradient(
+      ellipse 760px 520px at 50% -120px,
+      rgba(255, 106, 0, 0.12),
+      rgba(224, 72, 15, 0.04) 38%,
+      transparent 70%
+    ),
+    var(--background);
+  background-attachment: fixed;
   color: var(--foreground);
-  font-family: var(--font-sans), system-ui, sans-serif;
+  font-family: var(--font-sans), system-ui, -apple-system, "Segoe UI", Roboto,
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Botón de fuego: aplicado a los CTA primarios (bg-indigo-600) ─────── */
+.bg-indigo-600 {
+  background: linear-gradient(180deg, var(--ember), var(--brasa)) !important;
+  color: #1a0e06 !important;
+  box-shadow: 0 8px 22px rgba(255, 106, 0, 0.28);
+  transition: transform 0.16s ease, box-shadow 0.16s ease;
+}
+.hover\:bg-indigo-500:hover {
+  background: linear-gradient(180deg, var(--amber), var(--ember)) !important;
+  transform: translateY(-1px);
+  box-shadow: 0 12px 28px rgba(255, 106, 0, 0.4);
+}
+
+/* Tarjetas y superficies: textura cálida sutil + hover ascendente */
+.bg-white {
+  background: linear-gradient(165deg, rgba(255, 255, 255, 0.025), transparent),
+    var(--card) !important;
+}
+
+/* Enlace "part of Fervon" en el footer */
+.fervon-mark {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-weight: 700;
+  color: var(--ash);
+  transition: color 0.15s ease;
+}
+.fervon-mark:hover {
+  color: var(--amber);
+}
+.fervon-mark .blogo {
+  height: 16px;
+  width: auto;
+  display: block;
 }
