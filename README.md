@@ -13,6 +13,8 @@ con el texto ya cargado.
 Forma parte de [Fervon](https://fervon.dev) — un pequeño estudio de
 herramientas de desarrollo local-first.
 
+> ⭐ **Si Pregón te ahorra abrir cinco pestañas para publicar lo mismo, [dale una estrella](https://github.com/JoniMartin27/pregon) — es la forma más rápida de ayudar.** ¿Te falta un canal o tienes una idea? [Abre un issue](https://github.com/JoniMartin27/pregon/issues).
+
 ## Qué hace
 
 - **Componer → publicar → historial.** Escribes un mensaje, eliges canales y

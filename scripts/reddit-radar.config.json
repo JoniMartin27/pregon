@@ -1,0 +1,38 @@
+{
+  "_comment": "Radar de oportunidades de Reddit. Por cada proyecto: subreddits a vigilar y keywords que indican un hilo donde TU proyecto aporta valor real. El radar puntúa los hilos por coincidencias (título pesa x3) y te avisa de los mejores. Edita libremente. windowHours = antigüedad máxima del hilo; minScore = umbral para avisar.",
+  "windowHours": 48,
+  "minScore": 3,
+  "perProjectLimit": 5,
+  "projects": [
+    {
+      "name": "inferbench",
+      "subreddits": ["LocalLLaMA", "LocalLLM", "ollama", "selfhosted"],
+      "keywords": ["benchmark", "tokens per second", "tok/s", "inference speed", "llama.cpp", "vllm", "which engine", "gpu", "quant", "throughput", "compare models", "rtx"]
+    },
+    {
+      "name": "trace",
+      "subreddits": ["selfhosted", "productivity", "DataHoarder", "privacy"],
+      "keywords": ["rewind", "personal memory", "screen recording", "recall", "timeline of my", "remember what i did", "local-first", "privacy", "activity history"]
+    },
+    {
+      "name": "lookspan",
+      "subreddits": ["LocalLLaMA", "LangChain", "AI_Agents", "selfhosted"],
+      "keywords": ["observability", "tracing", "agent", "spans", "opentelemetry", "debug my agent", "llm logging", "mcp", "langsmith"]
+    },
+    {
+      "name": "claudescope",
+      "subreddits": ["ClaudeAI", "ClaudeCode", "commandline"],
+      "keywords": ["claude code", "session history", "search my sessions", "transcript", "claude logs", "local dashboard"]
+    },
+    {
+      "name": "launchpad",
+      "subreddits": ["selfhosted", "commandline", "webdev", "SideProject"],
+      "keywords": ["run all my projects", "dev server", "port collision", "local launcher", "manage projects", "monorepo dev"]
+    },
+    {
+      "name": "pregon",
+      "subreddits": ["SideProject", "marketing", "SaaS", "EntrepreneurRideAlong"],
+      "keywords": ["cross-post", "cross poster", "post to multiple", "social scheduler", "indie marketing", "promote my project", "share update everywhere"]
+    }
+  ]
+}
