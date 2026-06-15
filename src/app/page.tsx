@@ -35,7 +35,10 @@ export default async function Home() {
   return (
     <div className="mx-auto w-full max-w-5xl px-6 py-10">
       <section className="mb-10">
-        <h1 className="text-2xl font-semibold tracking-tight">Centro de difusión</h1>
+        <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--ac)]">
+          Pregón · forjado al rojo vivo
+        </p>
+        <h1 className="mt-1 text-2xl font-semibold tracking-tight">Centro de difusión</h1>
         <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
           Redacta una vez, publica en todas tus comunidades y lleva el registro de
           cada post.
