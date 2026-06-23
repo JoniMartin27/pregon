@@ -10,6 +10,26 @@ export const metadata: Metadata = {
   title: "Pregón — centro de difusión · Fervon",
   description:
     "Redacta una vez, publica en todas tus comunidades y lleva el registro de cada post. Forjado al rojo vivo por Fervon.",
+  openGraph: {
+    title: "Pregón — centro de difusión · Fervon",
+    description:
+      "Redacta una vez, publica en todas tus comunidades y lleva el registro de cada post. Forjado al rojo vivo por Fervon.",
+    images: [
+      {
+        url: "/og.svg",
+        width: 1200,
+        height: 630,
+        alt: "Pregón — Parte de Fervon",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Pregón — centro de difusión · Fervon",
+    description:
+      "Redacta una vez, publica en todas tus comunidades y lleva el registro de cada post. Forjado al rojo vivo por Fervon.",
+    images: ["/og.svg"],
+  },
 };
 
 function FlameMark({ className }: { className?: string }) {
