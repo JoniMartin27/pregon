@@ -78,7 +78,7 @@ export default async function Home() {
                 <div className="flex items-center gap-2">
                   <span
                     className="h-2.5 w-2.5 shrink-0 rounded-full"
-                    style={{ backgroundColor: p.color ?? "#a1a1aa" }}
+                    style={{ backgroundColor: p.color ?? "#a89a8e" }}
                   />
                   <h3 className="font-medium">{p.name}</h3>
                 </div>
