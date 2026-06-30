@@ -63,7 +63,7 @@ export default async function ProjectPage({
       <div className="mt-2 flex items-center gap-2">
         <span
           className="h-3 w-3 shrink-0 rounded-full"
-          style={{ backgroundColor: project.color ?? "#a1a1aa" }}
+          style={{ backgroundColor: project.color ?? "#a89a8e" }}
         />
         <h1 className="text-2xl font-semibold tracking-tight">{project.name}</h1>
       </div>
@@ -301,10 +301,10 @@ function Stat({
     zinc: "text-zinc-500",
   };
   const toneHex: Record<string, string> = {
-    default: "#71717a",
-    indigo: "#6366f1",
-    amber: "#f59e0b",
-    zinc: "#71717a",
+    default: "#a89a8e",
+    indigo: "#ff6a00",
+    amber: "#ffb02e",
+    zinc: "#a89a8e",
   };
   return (
     <div className="rounded-xl border border-zinc-200 bg-white p-3 dark:border-zinc-800 dark:bg-zinc-900">
