@@ -48,6 +48,19 @@ export interface MetricSnapshot {
   raw?: string;
 }
 
+export interface ResolveTargetArgs {
+  targetUrl: string;
+  credentials: Credentials;
+  meta?: AccountMeta;
+}
+
+export interface ResolvedTarget {
+  /** Id nativo del hilo destino (at-uri en Bluesky, id local en Mastodon). */
+  id: string;
+  /** Autor del hilo (handle / acct), si la plataforma lo devuelve. */
+  author?: string;
+}
+
 export interface FetchMetricsArgs {
   credentials: Credentials;
   meta?: AccountMeta;
@@ -67,6 +80,11 @@ export interface ChannelAdapter {
   credentialFields: CredentialField[];
   /** AUTO: publica vía API y devuelve id/permalink. */
   publish?: (args: PublishArgs) => Promise<PublishResult>;
+  /**
+   * AUTO + comentarios: comprueba que el hilo destino existe y devuelve su id
+   * (y el autor si se conoce) SIN publicar nada. Sirve de ensayo previo.
+   */
+  resolveTarget?: (args: ResolveTargetArgs) => Promise<ResolvedTarget>;
   /** ASISTIDO: construye una URL pre-cargada para abrir en el navegador. */
   composeUrl?: (content: PublishContent) => string;
   assistHint?: string;

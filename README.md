@@ -35,7 +35,7 @@ herramientas de desarrollo local-first.
 
 | Estado | Canales |
 |---|---|
-| 🟢 **Auto** (API) | Telegram · Discord · Slack · Mastodon · Bluesky · Dev.to · Reddit (post + comentario) · Hashnode |
+| 🟢 **Auto** (API) | Telegram · Discord · Slack · Mastodon (post + comentario) · Bluesky (post + comentario) · Dev.to · Reddit (post + comentario) · Hashnode |
 | 🟡 **Asistido** (URL pre-cargada) | X · Threads · LinkedIn · Hacker News · Lobsters · Indie Hackers |
 
 Son **8 canales automáticos** y 6 asistidos. Los asistidos abren el compositor
@@ -83,6 +83,8 @@ Abre <http://localhost:4040>.
 | `npm run reddit:radar` | Radar de Reddit |
 | `npm run reddit:health` | Comprueba el estado de la conexión de Reddit |
 | `npm run reddit:schedule` | Programador de Reddit |
+| `npx tsx scripts/blast-update.ts` | Publica una novedad en las cuentas sociales conectadas (`BODY`, `LINK`, `TAGS`, `PROJECT`) |
+| `npx tsx scripts/comment.ts` | Responde dentro de un hilo ajeno en Bluesky o Mastodon (`CHANNEL`, `TARGET`, `BODY_FILE`); con `DRY=1` solo resuelve el hilo, sin publicar |
 
 ## Estructura
 
